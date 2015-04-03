@@ -1,11 +1,18 @@
 unit Form;
 
+{$MODE Delphi}
+
 interface
 
 uses
-  Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  StdCtrls, ExtCtrls,
-  synaser { Synaser library downloaded from http://synapse.ararat.cz/files/synaser.zip }
+  {$IFDEF WIN32}
+  Windows,
+  {$ELSE}
+  LCLIntf, LCLType, LMessages,
+  {$ENDIF}
+  Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
+  StdCtrls, ExtCtrls, FileUtil,
+  synaser { Synaser library downloaded from https://github.com/svn2github/Ararat-Synapse.git }
   ;
 
 type
@@ -48,25 +55,23 @@ var
 
 implementation
 
-{$R *.DFM}
-
+{$R *.dfm}
 
 function GetFileModifyDate(FileName: string): TDateTime;
 var
   h: THandle;
-  Struct: TOFSTRUCT;
   lastwrite: Integer;
   t: TDateTime;
 begin
-  h := OpenFile(PChar(FileName), Struct, OF_SHARE_DENY_NONE);
+  h := FileOpen(FileName, fmShareDenyNone);
   try
-    if h <> HFILE_ERROR then
+    if h <> feInvalidHandle then
     begin
       lastwrite := FileGetDate(h);
       Result    := FileDateToDateTime(lastwrite);
     end;
   finally
-    CloseHandle(h);
+    FileClose(h);
   end;
 end;
 
@@ -94,7 +99,7 @@ begin
             tempdelta:=floattemp-floattempalt;
             if timestamp[1]=timestamp[3] then
             begin
-              Mem_Rcv.Lines.Strings[Mem_Rcv.Lines.Count-2]:='Logdatei seit >2 min. unver‰ndert';
+              Mem_Rcv.Lines.Strings[Mem_Rcv.Lines.Count-2]:='Logdatei seit >2 min. unver√§ndert';
             end
             else if (floattemp<0) or (floattemp>=100) or (tempdelta<-5) or (tempdelta>5) then
             begin
@@ -104,8 +109,8 @@ begin
             begin
               try
                 AssignFile (MyFile, logfilename);
-                if logfilecounter>100 then begin DeleteFile(logfilename); logfilecounter:=0; end;
-                if FileExists(logfilename) then
+                if logfilecounter>100 then begin DeleteFileUTF8(logfilename); logfilecounter:=0; end;
+                if FileExistsUTF8(logfilename) then
                 try Append(MyFile); except Mem_Rcv.Lines.Strings[Mem_Rcv.Lines.Count-2]:='Datei konnte nicht geschrieben werden'; Tmr_Rcv.Enabled := true; exit; end
                 else
                 try ReWrite(MyFile); except Mem_Rcv.Lines.Strings[Mem_Rcv.Lines.Count-2]:='Datei konnte nicht geschrieben werden'; Tmr_Rcv.Enabled := true; exit; end;
@@ -113,7 +118,7 @@ begin
                 writeln(MyFile, tfs);
                 CloseFile(MyFile);
                 logfilecounter:=logfilecounter+1;
-                Mem_Rcv.Lines.Strings[Mem_Rcv.Lines.Count-2]:=(DateTimeToStr(Now)+';'+Mem_Rcv.Lines.Strings[Mem_Rcv.Lines.Count-2]); //Text hinzuf¸gen
+                Mem_Rcv.Lines.Strings[Mem_Rcv.Lines.Count-2]:=(DateTimeToStr(Now)+';'+Mem_Rcv.Lines.Strings[Mem_Rcv.Lines.Count-2]); //Text hinzuf√ºgen
               except
                 Tmr_Rcv.Enabled := true;
                 Mem_Rcv.Lines.Strings[Mem_Rcv.Lines.Count-2]:='Datei konnte nicht geschrieben werden';
@@ -136,7 +141,7 @@ begin
           Mem_Rcv.Lines.Strings[Mem_Rcv.Lines.Count-1] + chr(Ch);
     until (ser.LastError=ErrTimeout) or (ser.WaitingData>0) ;
   end;
-  if FileExists(displayfilename) then
+  if FileExistsUTF8(displayfilename) then
   begin
     try
       AssignFile(myFile, displayfilename);
@@ -192,7 +197,7 @@ procedure TMainForm.FormCreate(Sender: TObject);
 var i: integer;
 begin
   for i:=1 to 3 do timestamp[i]:=0;
-  if FileExists('settings.txt') then
+  if FileExistsUTF8('settings.txt') then
   begin
     AssignFile(mySettings, 'settings.txt');
     Reset(mySettings);
@@ -207,7 +212,7 @@ begin
     logfilename:=Edit1.Text;
     displayfilename:=Edit2.Text;
   end;
-  if DeleteFile(logfilename) then
+  if DeleteFileUTF8(logfilename) then
   begin
     AssignFile(myFile, logfilename);
     ReWrite(myFile);

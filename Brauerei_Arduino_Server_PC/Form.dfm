@@ -125,7 +125,7 @@ object MainForm: TMainForm
     Top = 184
     Width = 113
     Height = 17
-    Caption = 'Log-'#220'berwachung'
+    Caption = 'Log-Überwachung'
     Checked = True
     State = cbChecked
     TabOrder = 6

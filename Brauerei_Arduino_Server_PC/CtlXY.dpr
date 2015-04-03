@@ -1,10 +1,18 @@
 program CtlXY;
 
+{$IFDEF FPC}
+  {$MODE Delphi}
+{$ENDIF}
+
 uses
+{$IFnDEF FPC}
+{$ELSE}
+  Interfaces,
+{$ENDIF}
   Forms,
   Form in 'Form.pas' {MainForm};
 
-{$R *.RES}
+{$R *.res}
 
 begin
   Application.Initialize;
